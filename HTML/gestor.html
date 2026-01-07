@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+utf-8 
+<head>
+  <title>Gestor - Aprovações</title>
+</head>
+
+<body onload="protegerTela('gestor'); carregar()">
+
+<h2>Solicitações Pendentes</h2>
+<ul id="lista"></ul>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+
+<script>
+function carregar() {
+  const u = getUsuario();
+
+  apiGet(`action=listarSolicitacoes&email=${u.email}`)
+    .then(dados => {
+      lista.innerHTML = '';
+      dados
+        .filter(s => s.status === 'PENDENTE_GESTOR')
+        .forEach(s => {
+          lista.innerHTML += `
+            <li>
+              ${s.colaborador} <br>
+              ${s.data_inicio} → ${s.data_fim} <br>
+
+              <button onclick="aprovar(${s.id})">Aprovar</button>
+              <button onclick="reprovar(${s.id})">Reprovar</button>
+            </li>
+            <hr>
+          `;
+        });
+    });
+}
+
+function aprovar(id) {
+  apiPost({
+    action: 'aprovarGestor',
+    id: id,
+    email_rh: 'EMAIL_DO_RH'
+  }).then(() => {
+    alert('Aprovado');
+    carregar();
+  });
+}
+
+function reprovar(id) {
+  const justificativa = prompt('Motivo da reprovação:');
+
+  if (!justificativa) return;
+
+  apiPost({
+    action: 'reprovarGestor',
+    id: id,
+    justificativa: justificativa,
+    email_colaborador: '' // opcional
+  }).then(() => {
+    alert('Reprovado');
+    carregar();
+  });
+}
+</script>
+
+</body>
+</html>

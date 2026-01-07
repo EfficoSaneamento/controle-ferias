@@ -1,0 +1,90 @@
+<body onload="protegerTela('solicitante'); carregarSolicitacoes()">
+
+  <h2>Minhas Férias</h2>
+
+  <div>
+    <label for="inicio">Data de início das férias</label><br>
+    <input id="inicio" type="date">
+  </div>
+
+  <br>
+
+  <div>
+    <label for="fim">Data de término das férias</label><br>
+    <input id="fim" type="date">
+  </div>
+
+  <br>
+
+  <div>
+    <label for="obs">Observação</label><br>
+    <textarea
+      id="obs"
+      placeholder="Ex: viagem programada, substituição de colega...">
+    </textarea>
+  </div>
+
+  <br>
+
+  <button onclick="criar()">Solicitar</button>
+
+  <h3>Status</h3>
+  <ul id="lista"></ul>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    function criar() {
+      const u = getUsuario();
+
+      const inicio = document.getElementById('inicio').value;
+      const fim = document.getElementById('fim').value;
+      const obs = document.getElementById('obs').value;
+
+      if (!inicio || !fim) {
+        alert('Informe o período das férias');
+        return;
+      }
+
+      apiPost({
+        action: 'criarSolicitacao',
+        colaborador: u.nome,
+        email_colaborador: u.email,
+        data_inicio: inicio,
+        data_fim: fim,
+        observacao: obs,
+        email_gestor: 'EMAIL_DO_GESTOR'
+      }).then(() => {
+        alert('Solicitação enviada');
+
+        document.getElementById('inicio').value = '';
+        document.getElementById('fim').value = '';
+        document.getElementById('obs').value = '';
+
+        carregarSolicitacoes();
+      });
+    }
+
+    function carregarSolicitacoes() {
+      const u = getUsuario();
+
+      apiGet(`action=listarSolicitacoes&email=${u.email}`)
+        .then(dados => {
+          const lista = document.getElementById('lista');
+          lista.innerHTML = '';
+
+          dados.forEach(s => {
+            lista.innerHTML += `
+              <li>
+                ${s.data_inicio} → ${s.data_fim} |
+                <strong>${s.status}</strong>
+              </li>
+            `;
+          });
+        });
+    }
+  </script>
+
+</body>
+

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RH - Férias</title>
+</head>
+
+<body onload="protegerTela('rh'); carregar()">
+
+  <h2>Férias Aprovadas</h2>
+  <ul id="lista"></ul>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    function carregar() {
+      apiGet(`action=listarSolicitacoes&email=`)
+        .then(dados => {
+          const lista = document.getElementById('lista');
+          lista.innerHTML = '';
+
+          dados
+            .filter(s => s.status === 'APROVADO_GESTOR')
+            .forEach(s => {
+              lista.innerHTML += `
+                <li>
+                  <strong>${s.colaborador}</strong><br>
+                  ${s.data_inicio} → ${s.data_fim}<br><br>
+
+                  <label for="pdf_${s.id}">Link do documento de férias (PDF)</label><br>
+                  <input
+                    type="text"
+                    id="pdf_${s.id}"
+                    placeholder="https://drive.google.com/..."
+                  >
+                  <br><br>
+
+                  <button onclick="enviar(${s.id}, '${s.email_colaborador}')">
+                    Enviar Documento
+                  </button>
+                </li>
+                <hr>
+              `;
+            });
+        });
+    }
+
+    function enviar(id, emailColaborador) {
+      const link = document.getElementById(`pdf_${id}`).value;
+
+      if (!link) {
+        alert('Informe o link do PDF');
+        return;
+      }
+
+      apiPost({
+        action: 'enviarDocumento',
+        id_solicitacao: id,
+        link_pdf: link,
+        email_colaborador: emailColaborador
+      }).then(() => {
+        alert('Documento enviado ao colaborador');
+        carregar();
+      });
+    }
+  </script>
+
+</body>
+
